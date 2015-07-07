@@ -1,0 +1,7 @@
+{
+    "name": "rpi-rest-leds",
+    "description": "REST api to control LEDs on Rpi GPIO",
+    "dependencies": {
+        "express": "4.x"
+    }
+}
