@@ -1,4 +1,4 @@
 *.log
 *.swp
 *.dmp
-
+node_modules/

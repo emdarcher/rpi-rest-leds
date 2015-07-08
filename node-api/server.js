@@ -1,7 +1,5 @@
 //server.js all the server stuff here
 //
-//
-
 var express = require('express');
 var app     = express();
 var bodyParser  = require('body-parser');
@@ -34,10 +32,10 @@ router.route('/leds/:led_id')
     .get( led.findById )
     .put( led.updateLed );
 
-
-
-
 app.use('/node-api', router);
+
+//run LED init routines
+led.init_led_ctrl();
 
 // start the server
 //
