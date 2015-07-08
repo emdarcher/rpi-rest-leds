@@ -3,6 +3,7 @@
     "description": "REST api to control LEDs on Rpi GPIO",
     "dependencies": {
         "express": "~4.0.0",
-        "body-parser": "~1.13.2"
+        "body-parser": "~1.13.2",
+        "sleep": "~2.0.0"
     }
 }

@@ -34,8 +34,6 @@ router.route('/leds/:led_id')
 
 app.use('/node-api', router);
 
-//run LED init routines
-led.init_led_ctrl();
 
 // start the server
 //
@@ -43,4 +41,6 @@ app.listen(port);
 console.log('Listening on port: ' + port);
 
 
+//run LED init routines
+led.init_led_ctrl();
 

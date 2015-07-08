@@ -4,6 +4,7 @@
 
 // to use for executing programs on the machine
 var exec = require('child_process').exec;
+var sleep = require('sleep');
 
 var gpio_cmd = "gpio -g ";
 
@@ -30,6 +31,7 @@ var led_array = [
 
 exports.init_led_ctrl = function() {
     init_led_gpio(led_array);
+    sleep.sleep(1);
     update_all_led_gpio(led_array);
 };
 
@@ -100,7 +102,7 @@ function runCmd(cmd) {
 function init_led_gpio( all_led_data ) {
     for(var i=0;i<all_led_data.length;i++){
         var gpio_num = all_led_data[i].BCM_gpio;
-        var cmd_str = gpio_cmd + ' mode ' + gpio_num + 'output';
+        var cmd_str = gpio_cmd + ' mode ' + gpio_num + ' output';
         runCmd( cmd_str );
     }
 }
