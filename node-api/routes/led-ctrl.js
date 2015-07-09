@@ -36,10 +36,14 @@ exports.init_led_ctrl = function() {
     Step(
         function () {
             init_led_gpio(led_array);
-//            this;
-        }, function (err) {
-            //if(err) throw err;
+            return this;
+        }, function (err, callback) {
+            if(err) throw err;
             update_all_led_gpio(led_array);
+            return callback();
+        }, function (err, callback) {
+            if(err) throw err;
+            console.log('done with initialization');
         }
     );
 };
@@ -115,7 +119,7 @@ function init_led_gpio( all_led_data ) {
         var cmd_str = gpio_cmd + ' mode ' + gpio_num + ' output';
         runCmd( cmd_str );
     }
-    return;
+//    return;
 }
 
 function update_led_gpio( led_data ){
@@ -129,5 +133,5 @@ function update_all_led_gpio( all_led_data ){
     for(var i=0;i<all_led_data.length;i++){
         update_led_gpio( all_led_data[i] );
     }
-    return;
+//    return;
 }
