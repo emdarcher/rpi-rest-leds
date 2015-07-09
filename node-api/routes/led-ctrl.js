@@ -6,6 +6,9 @@
 var exec = require('child_process').exec;
 var sleep = require('sleep');
 
+Step = require('step');
+//global.Step = require('../lib/step');
+
 var gpio_cmd = "gpio -g ";
 
 var led_array = [
@@ -30,9 +33,15 @@ var led_array = [
 ];
 
 exports.init_led_ctrl = function() {
-    init_led_gpio(led_array);
-    sleep.sleep(1);
-    update_all_led_gpio(led_array);
+    Step(
+        function () {
+            init_led_gpio(led_array);
+//            this;
+        }, function (err) {
+            //if(err) throw err;
+            update_all_led_gpio(led_array);
+        }
+    );
 };
 
 
@@ -80,8 +89,9 @@ exports.updateLed = function(req, res) {
     } else {
         var state = req.body.state;
         if( (state == "0") || (state == "1") ){
-            led_array[i].state = state;
-            update_led_gpio( led_array[i] );
+            led_array[index].state = state;
+            update_led_gpio( led_array[index] );
+            res.send(200); //200 OK, successful request
         } else {
             console.log(state + ' is not a valid state!');
             res.json(400); //400 bad request
@@ -93,7 +103,7 @@ exports.updateLed = function(req, res) {
 function runCmd(cmd) {
     exec(cmd, function (error, stdout, stderr) {
         console.log('executing: ' + cmd);
-        console.log('stdout: ' + stdout);
+        if(stdout.length > 0) console.log('stdout: ' + stdout);
         if(stderr.length > 0) console.log('stderr: ' + stderr);
         if(error !== null) console.log('exec error: ' + error);
     });
@@ -105,6 +115,7 @@ function init_led_gpio( all_led_data ) {
         var cmd_str = gpio_cmd + ' mode ' + gpio_num + ' output';
         runCmd( cmd_str );
     }
+    return;
 }
 
 function update_led_gpio( led_data ){
@@ -118,4 +129,5 @@ function update_all_led_gpio( all_led_data ){
     for(var i=0;i<all_led_data.length;i++){
         update_led_gpio( all_led_data[i] );
     }
+    return;
 }

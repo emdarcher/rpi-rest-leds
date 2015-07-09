@@ -9,6 +9,7 @@ app.use(bodyParser.json());
 
 var port = process.env.PORT || 8080;
 
+//global.Step = require('./lib/step');
 var led = require('./routes/led-ctrl');
 
 var router = express.Router(); // get instance of express router
