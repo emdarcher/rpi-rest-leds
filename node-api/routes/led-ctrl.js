@@ -34,6 +34,7 @@ var led_array = [
     }
 ];
 
+var update_led_is_verbose = true;
 var init_done = false;
 var blink_delay = 500;
 
@@ -44,12 +45,17 @@ var led_blink_interval = setInterval( function() {
             parallel( led_array , function( data, cb ) {
                 if(data.blinking){
                     data.state = (data.state == "0") ? "1":"0";
+                    //update_led_is_verbose = false;
+                    //update_led_gpio( data, cb, update_led_is_verbose );
+                    update_led_gpio( data, cb, true );
+                    //update_led_is_verbose = true;
                 }
                 return cb();
             }, this);
         }, function (err) {
             if(err) throw err;
-            update_all_led_gpio(led_array, this);
+            console.log('Toggled leds for blink');
+            //update_all_led_gpio(led_array, this);
         }    
     );
     }
@@ -144,9 +150,13 @@ function runCmd(cmd, cb) {
             console.log('exec error: ' + error);
             return cb(error);
         }
-        console.log('executing: ' + cmd);
-        if(stdout.length > 0) console.log('stdout: ' + stdout);
-        if(stderr.length > 0) console.log('stderr: ' + stderr);
+        var verbose = (arguments.length > 2) ? arguments[2] : true;
+        //verbose = true;
+        if(verbose){
+            console.log('executing: ' + cmd);
+            if(stdout.length > 0) console.log('stdout: ' + stdout);
+            if(stderr.length > 0) console.log('stderr: ' + stderr);
+        }
         return cb();
     });
 }
@@ -196,7 +206,7 @@ function update_led_gpio( led_data , cb ){
     var new_state = led_data.state;
     var gpio_num = led_data.BCM_gpio;
     var cmd_str = gpio_cmd + ' write ' + gpio_num + ' ' + new_state;
-    runCmd( cmd_str , cb );
+    runCmd( cmd_str , cb, ((arguments.length > 2) ? arguments[2] : true) );
 }
 
 function update_all_led_gpio( all_led_data, done ){
