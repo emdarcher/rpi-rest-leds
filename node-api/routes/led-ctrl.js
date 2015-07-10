@@ -15,21 +15,45 @@ var led_array = [
         id: "0",
         BCM_gpio: "9",
         state: "0",
-        color: "red"
+        color: "red",
+        blinking: false
     },
     {
         id: "1",
         BCM_gpio: "10",
         state: "0",
-        color: "yellow"
+        color: "yellow",
+        blinking: false
     },
     {
         id: "2",
         BCM_gpio: "11",
         state: "0",
-        color: "green"
+        color: "green",
+        blinking: false
     }
 ];
+
+var init_done = false;
+var blink_delay = 500;
+
+var led_blink_interval = setInterval( function() {
+    if(init_done){
+    Step(
+        function () {
+            parallel( led_array , function( data, cb ) {
+                if(data.blinking){
+                    data.state = (data.state == "0") ? "1":"0";
+                }
+                return cb();
+            }, this);
+        }, function (err) {
+            if(err) throw err;
+            update_all_led_gpio(led_array, this);
+        }    
+    );
+    }
+}, blink_delay);
 
 exports.init_led_ctrl = function() {
     Step(
@@ -41,6 +65,7 @@ exports.init_led_ctrl = function() {
             update_all_led_gpio(led_array, this);
         }, function (err, callback) {
             if(err) throw err;
+            init_done = true;
             console.log('done with initialization');
         }
     );
@@ -89,18 +114,25 @@ exports.updateLed = function(req, res) {
        console.log('LED with id: ' + _id + ' not found!'); 
         res.json(404); //404 not found
     } else {
+        var blinking = req.body.blinking;
         var state = req.body.state;
-        if( (state == "0") || (state == "1") ){
-            led_array[index].state = state;
-            update_led_gpio( led_array[index], function (err) {
-                if(err){
-                    res.send(500);
-                } else { res.send(200); }
-            });
-            res.send(200); //200 OK, successful request
-        } else {
-            console.log(state + ' is not a valid state!');
-            res.json(400); //400 bad request
+        
+        if(state !== null){
+            if( ((state == "0") || (state == "1")) ){
+                led_array[index].state = state;
+                update_led_gpio( led_array[index], function (err) {
+                    if(err){
+                        res.send(500);
+                    } else { res.send(200); }
+                });
+                res.send(200); //200 OK, successful request
+            } else {
+                console.log(state + ' is not a valid state!');
+                res.json(400); //400 bad request
+            }
+        }
+        if(blinking !== null){
+            led_array[index].blinking = blinking;
         }
     }
     
@@ -170,3 +202,5 @@ function update_led_gpio( led_data , cb ){
 function update_all_led_gpio( all_led_data, done ){
     parallel(all_led_data, update_led_gpio, done);
 }
+
+
