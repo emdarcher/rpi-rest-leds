@@ -23,21 +23,24 @@ var led_array = [
         BCM_gpio: "9",
         state: "0",
         color: "red",
-        blinking: false
+        blinking: false,
+        blink_rate: 0
     },
     {
         id: "1",
         BCM_gpio: "10",
         state: "0",
         color: "yellow",
-        blinking: false
+        blinking: false,
+        blink_rate: 0
     },
     {
         id: "2",
         BCM_gpio: "11",
         state: "0",
         color: "green",
-        blinking: false
+        blinking: false,
+        blink_rate: 0
     }
 ];
 
