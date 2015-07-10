@@ -4,7 +4,6 @@
 
 // to use for executing programs on the machine
 var exec = require('child_process').exec;
-var sleep = require('sleep');
 
 Step = require('step');
 //global.Step = require('../lib/step');
@@ -35,12 +34,11 @@ var led_array = [
 exports.init_led_ctrl = function() {
     Step(
         function () {
-            init_led_gpio(led_array);
-            return this;
-        }, function (err, callback) {
+            init_led_gpio(led_array, this);
+            //return this;
+        }, function (err) {
             if(err) throw err;
-            update_all_led_gpio(led_array);
-            return callback();
+            update_all_led_gpio(led_array, this);
         }, function (err, callback) {
             if(err) throw err;
             console.log('done with initialization');
@@ -94,7 +92,11 @@ exports.updateLed = function(req, res) {
         var state = req.body.state;
         if( (state == "0") || (state == "1") ){
             led_array[index].state = state;
-            update_led_gpio( led_array[index] );
+            update_led_gpio( led_array[index], function (err) {
+                if(err){
+                    res.send(500);
+                } else { res.send(200); }
+            });
             res.send(200); //200 OK, successful request
         } else {
             console.log(state + ' is not a valid state!');
@@ -104,34 +106,67 @@ exports.updateLed = function(req, res) {
     
 };
 
-function runCmd(cmd) {
+function runCmd(cmd, cb) {
     exec(cmd, function (error, stdout, stderr) {
+        if(error !== null){ 
+            console.log('exec error: ' + error);
+            return cb(error);
+        }
         console.log('executing: ' + cmd);
         if(stdout.length > 0) console.log('stdout: ' + stdout);
         if(stderr.length > 0) console.log('stderr: ' + stderr);
-        if(error !== null) console.log('exec error: ' + error);
+        return cb();
     });
 }
 
-function init_led_gpio( all_led_data ) {
-    for(var i=0;i<all_led_data.length;i++){
-        var gpio_num = all_led_data[i].BCM_gpio;
-        var cmd_str = gpio_cmd + ' mode ' + gpio_num + ' output';
-        runCmd( cmd_str );
+function parallel (items, fn, done) {
+    var count = 0;
+    var errored;
+
+    //one callback for each function result
+    //make sure we don't create function in a loop
+    function cb (err) {
+        // keep track of how many functions have called back.
+        count++;
+
+        // If an error has already occured, ignore additional results. Calling
+        // a callback multiple multiple times breaks the implied contract of
+        // callbacks in node.
+        if (errored) { return; }
+
+        //if error occurs, callback and stop any future callbacks
+        if (err) {
+            errored = err;
+            return;
+        }
+        
+        // when count is equal to # of items passed in , call
+        // the primary user callback with the possible error.
+        if (count === items.length) {
+            return done(errored);
+        }
     }
-//    return;
+    for ( var i = 0; i < items.length; i++) {
+        fn(items[i], cb);
+    }
 }
 
-function update_led_gpio( led_data ){
+
+function init_led_gpio( all_led_data , done ) {
+    parallel(all_led_data, function ( data, cb ) {
+        var gpio_num = data.BCM_gpio;
+        var cmd_str = gpio_cmd + ' mode ' + gpio_num + ' output';
+        runCmd( cmd_str , cb);
+    }, done);
+}
+
+function update_led_gpio( led_data , cb ){
     var new_state = led_data.state;
     var gpio_num = led_data.BCM_gpio;
     var cmd_str = gpio_cmd + ' write ' + gpio_num + ' ' + new_state;
-    runCmd( cmd_str );
+    runCmd( cmd_str , cb );
 }
 
-function update_all_led_gpio( all_led_data ){
-    for(var i=0;i<all_led_data.length;i++){
-        update_led_gpio( all_led_data[i] );
-    }
-//    return;
+function update_all_led_gpio( all_led_data, done ){
+    parallel(all_led_data, update_led_gpio, done);
 }

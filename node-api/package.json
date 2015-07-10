@@ -4,7 +4,6 @@
     "dependencies": {
         "express": "~4.0.0",
         "body-parser": "~1.13.2",
-        "sleep": "~2.0.0",
         "step": "~0.0.6"
     }
 }
