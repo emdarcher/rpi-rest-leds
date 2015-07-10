@@ -1,15 +1,22 @@
 //led-ctrl.js
 //led control routes and api goes in here
-//
 
 // to use for executing programs on the machine
 var exec = require('child_process').exec;
 
+// get the `step` module, to use for flow control
 Step = require('step');
-//global.Step = require('../lib/step');
+//Step = require('../lib/step');
 
+// the shell command for altering the GPIO,
+// this is the `gpio` command line utility
+// from WiringPi, whith the `-g` parameter
+// because we are using the BCM GPIO numbering scheme.
 var gpio_cmd = "gpio -g ";
 
+
+// array which stores the data and properties for the LEDs
+// This is manipulated by the functions behind the API.
 var led_array = [
     {
         id: "0",
@@ -35,37 +42,39 @@ var led_array = [
 ];
 
 var update_led_is_verbose = true;
+
+// flag to indicate whether the initialization is complete
 var init_done = false;
+// delay in milliseconds for the blinking interval function
 var blink_delay = 500;
 
+// Interval function (repeats after a certain time interval)
+// which toggles the states of any LEDs that have
+// "blinking: true" in their data properties
 var led_blink_interval = setInterval( function() {
+    // checks that the initalization has finished before running
+    // because it could be troublesome otherwise.
     if(init_done){
-    Step(
-        function () {
-            parallel( led_array , function( data, cb ) {
-                if(data.blinking){
-                    data.state = (data.state == "0") ? "1":"0";
-                    //update_led_is_verbose = false;
-                    //update_led_gpio( data, cb, update_led_is_verbose );
-                    update_led_gpio( data, cb, true );
-                    //update_led_is_verbose = true;
-                }
-                return cb();
-            }, this);
-        }, function (err) {
-            if(err) throw err;
-            console.log('Toggled leds for blink');
-            //update_all_led_gpio(led_array, this);
-        }    
-    );
+        // loop through the LEDs' data
+        parallel( led_array , function( data, cb ) {
+            // if the LED has `blinking: true`
+            if(data.blinking){
+                // toggle the state between "0" and "1"
+                data.state = (data.state == "0") ? "1":"0";
+                update_led_is_verbose = false;
+                update_led_gpio( data, cb, update_led_is_verbose );
+                update_led_is_verbose = true;
+            }
+            return cb();
+        }, function (err) { if(err) throw err; } );
     }
 }, blink_delay);
 
+// function which performs initialization steps for the LEDs
 exports.init_led_ctrl = function() {
     Step(
         function () {
             init_led_gpio(led_array, this);
-            //return this;
         }, function (err) {
             if(err) throw err;
             update_all_led_gpio(led_array, this);
@@ -117,41 +126,48 @@ exports.updateLed = function(req, res) {
         }
     }
     if(!found){
-       console.log('LED with id: ' + _id + ' not found!'); 
-        res.json(404); //404 not found
+        console.log('LED with id: ' + _id + ' not found!'); 
+        res.send(404); //404 not found
     } else {
-        var blinking = req.body.blinking;
+        // get data from the body of the PUT request
         var state = req.body.state;
+        var blinking = req.body.blinking;
         
         if(state !== null){
             if( ((state == "0") || (state == "1")) ){
-                led_array[index].state = state;
-                update_led_gpio( led_array[index], function (err) {
-                    if(err){
-                        res.send(500);
-                    } else { res.send(200); }
-                });
+                // update the LED state and gpio only if it has changed
+                // so we don't waste cycles writing the same value again
+                if(led_array[index].state !== state){
+                    //copy new state into the LED's data
+                    led_array[index].state = state;
+                    update_led_gpio( led_array[index], function (err) {
+                        if(err){
+                            res.send(500);
+                        } else { res.send(200); }
+                    });
+                }
                 res.send(200); //200 OK, successful request
             } else {
                 console.log(state + ' is not a valid state!');
-                res.json(400); //400 bad request
+                res.send(400); //400 bad request
             }
         }
         if(blinking !== null){
             led_array[index].blinking = blinking;
         }
     }
-    
 };
 
+// a little wrapper for exec which handles errors and printing output
 function runCmd(cmd, cb) {
+    //if there is 3rd argument, then it is the verbosity state
+    var verbose = (arguments.length > 2) ? arguments[2] : true;
     exec(cmd, function (error, stdout, stderr) {
         if(error !== null){ 
             console.log('exec error: ' + error);
             return cb(error);
         }
-        var verbose = (arguments.length > 2) ? arguments[2] : true;
-        //verbose = true;
+        // if verbose==true, then we log the command and it's output
         if(verbose){
             console.log('executing: ' + cmd);
             if(stdout.length > 0) console.log('stdout: ' + stdout);
@@ -161,6 +177,10 @@ function runCmd(cmd, cb) {
     });
 }
 
+
+// a useful function for safely looping through data and 
+// operating on it in "parallel" while catching errors
+// and staying asynchronous.
 function parallel (items, fn, done) {
     var count = 0;
     var errored;
