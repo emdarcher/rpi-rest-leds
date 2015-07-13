@@ -140,9 +140,9 @@ exports.updateLed = function(req, res) {
         // get data from the body of the PUT request
         var state = req.body.state;
         var blinking = req.body.blinking;
-        var blink_rate = req.body.blink_rate
+        var blink_rate = req.body.blink_rate;
 
-        if(state !== null){
+        if(state !== undefined){
             if( ((state == "0") || (state == "1")) ){
                 // update the LED state and gpio only if it has changed
                 // so we don't waste cycles writing the same value again
@@ -161,15 +161,14 @@ exports.updateLed = function(req, res) {
                 res.send(400); //400 bad request
             }
         }
-        if((blinking !== null) || (blink_rate !== null) ){
-            if(blinking !== null){
+        if((blinking !== undefined) || (blink_rate !== undefined) ){
+            if(blinking !== undefined){
                 led_array[index].blinking = blinking;
             } else { blinking = led_array[index].blinking; }
-            if(blink_rate !== null){
+            if(blink_rate !== undefined){
                 led_array[index].blink_rate = blink_rate;
             } else { blink_rate = led_array[index].blink_rate; }
 
-            //code to make intervalObject in the array
             if(blinking && (blink_rate > 0)){
                 if(blink_rate > 0){
                     var delay;
@@ -184,6 +183,7 @@ exports.updateLed = function(req, res) {
                     if(blinker_interval_array[index] !== null){
                         clearInterval(blinker_interval_array[index]);
                     }
+                    //code to make intervalObject in the array
                     blinker_interval_array[index] = setInterval( function() {
                         led_array[index].state = (led_array[index].state == "0") ? "1":"0";
                         update_led_gpio(led_array[index] , function(err){
