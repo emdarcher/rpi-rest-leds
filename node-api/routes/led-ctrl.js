@@ -44,6 +44,9 @@ var led_array = [
     }
 ];
 
+
+var blinker_interval_array = [];
+
 var update_led_is_verbose = true;
 
 // flag to indicate whether the initialization is complete
@@ -51,27 +54,29 @@ var init_done = false;
 // delay in milliseconds for the blinking interval function
 var blink_delay = 500;
 
+var min_blink_delay = 200;
+
 // Interval function (repeats after a certain time interval)
 // which toggles the states of any LEDs that have
 // "blinking: true" in their data properties
-var led_blink_interval = setInterval( function() {
-    // checks that the initalization has finished before running
-    // because it could be troublesome otherwise.
-    if(init_done){
-        // loop through the LEDs' data
-        parallel( led_array , function( data, cb ) {
-            // if the LED has `blinking: true`
-            if(data.blinking){
-                // toggle the state between "0" and "1"
-                data.state = (data.state == "0") ? "1":"0";
-                update_led_is_verbose = false;
-                update_led_gpio( data, cb, update_led_is_verbose );
-                update_led_is_verbose = true;
-            }
-            return cb();
-        }, function (err) { if(err) throw err; } );
-    }
-}, blink_delay);
+//var led_blink_interval = setInterval( function() {
+//    // checks that the initalization has finished before running
+//    // because it could be troublesome otherwise.
+//    if(init_done){
+//        // loop through the LEDs' data
+//        parallel( led_array , function( data, cb ) {
+//            // if the LED has `blinking: true`
+//            if(data.blinking){
+//                // toggle the state between "0" and "1"
+//                data.state = (data.state == "0") ? "1":"0";
+//                update_led_is_verbose = false;
+//                update_led_gpio( data, cb, update_led_is_verbose );
+//                update_led_is_verbose = true;
+//            }
+//            return cb();
+//        }, function (err) { if(err) throw err; } );
+//    }
+//}, blink_delay);
 
 // function which performs initialization steps for the LEDs
 exports.init_led_ctrl = function() {
@@ -135,7 +140,8 @@ exports.updateLed = function(req, res) {
         // get data from the body of the PUT request
         var state = req.body.state;
         var blinking = req.body.blinking;
-        
+        var blink_rate = req.body.blink_rate
+
         if(state !== null){
             if( ((state == "0") || (state == "1")) ){
                 // update the LED state and gpio only if it has changed
@@ -155,8 +161,51 @@ exports.updateLed = function(req, res) {
                 res.send(400); //400 bad request
             }
         }
-        if(blinking !== null){
-            led_array[index].blinking = blinking;
+        if((blinking !== null) || (blink_rate !== null) ){
+            if(blinking !== null){
+                led_array[index].blinking = blinking;
+            } else { blinking = led_array[index].blinking; }
+            if(blink_rate !== null){
+                led_array[index].blink_rate = blink_rate;
+            } else { blink_rate = led_array[index].blink_rate; }
+
+            //code to make intervalObject in the array
+            if(blinking && (blink_rate > 0)){
+                if(blink_rate > 0){
+                    var delay;
+                    if(blink_rate >= min_blink_delay){
+                        delay = blink_rate;
+                    } else {
+                        console.log(blink_rate + ' is below the minimum delay of '
+                                + min_blink_delay + ', setting delay to the minimum delay.');
+                        delay = min_blink_delay;
+                    }
+                    //clear the interval if it exists
+                    if(blinker_interval_array[index] !== null){
+                        clearInterval(blinker_interval_array[index]);
+                    }
+                    blinker_interval_array[index] = setInterval( function() {
+                        led_array[index].state = (led_array[index].state == "0") ? "1":"0";
+                        update_led_gpio(led_array[index] , function(err){
+                            if(err){
+                                throw err;
+                            }
+                        }, false); 
+                    }, delay);
+                } else {
+                }
+            } else {
+                if(!(blink_rate > 0)){
+                    console.log('blink_rate undefined is or set to zero, not going to blink');
+                }
+                if(!blinking){
+                    console.log('blinking is set to false or undefined, so not going to blink');
+                }
+                //clear the interval if it exists
+                if(blinker_interval_array[index] !== null){
+                    clearInterval(blinker_interval_array[index]);
+                }
+            }
         }
     }
 };
