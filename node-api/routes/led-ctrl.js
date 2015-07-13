@@ -151,7 +151,7 @@ exports.updateLed = function(req, res) {
                     led_array[index].state = state;
                     update_led_gpio( led_array[index], function (err) {
                         if(err){
-                            res.send(500);
+                            res.send(500);//internal server error
                         } else { res.send(200); }
                     });
                 }
@@ -162,49 +162,68 @@ exports.updateLed = function(req, res) {
             }
         }
         if((blinking !== undefined) || (blink_rate !== undefined) ){
+            var req_error = false;//flag for indicating an error in the request
             if(blinking !== undefined){
-                led_array[index].blinking = blinking;
+                if(typeof blinking == 'boolean'){
+                    led_array[index].blinking = blinking;
+                } else {
+                    console.log('The ' + blinking 
+                            + ' value of blinking is not a boolean!');
+                    req_error = true;//set the req_error flag
+                    //res.send(400); //400 bad request
+                }
             } else { blinking = led_array[index].blinking; }
             if(blink_rate !== undefined){
                 led_array[index].blink_rate = blink_rate;
             } else { blink_rate = led_array[index].blink_rate; }
-
-            if(blinking && (blink_rate > 0)){
-                if(blink_rate > 0){
+            
+            //check if any of the above code has had an error in the request
+            if(!req_error){
+                if(blinking && (blink_rate > 0)){
                     var delay;
                     if(blink_rate >= min_blink_delay){
                         delay = blink_rate;
                     } else {
-                        console.log(blink_rate + ' is below the minimum delay of '
-                                + min_blink_delay + ', setting delay to the minimum delay.');
+                        console.log( blink_rate 
+                                + ' is below the minimum delay of '
+                                + min_blink_delay 
+                                + ', setting delay to the minimum delay.');
                         delay = min_blink_delay;
                     }
-                    //clear the interval if it exists
+                    //clear the interval if it already exists
                     if(blinker_interval_array[index] !== null){
                         clearInterval(blinker_interval_array[index]);
                     }
                     //code to make intervalObject in the array
+                    //this repeats after a certain interval, independently
+                    //from other code, kind of like it's own little thread.
+                    //This interval toggles an LED after a certain delay
+                    //to make it blink.
                     blinker_interval_array[index] = setInterval( function() {
-                        led_array[index].state = (led_array[index].state == "0") ? "1":"0";
+                        led_array[index].state =
+                                (led_array[index].state == "0") ? "1":"0";
                         update_led_gpio(led_array[index] , function(err){
-                            if(err){
-                                throw err;
-                            }
+                            if(err){throw err;}
                         }, false); 
                     }, delay);
+                    res.send(200);//OK
                 } else {
+                    if(!(blink_rate > 0)){
+                        console.log('blink_rate is undefined or set to zero,'
+                                + 'so not going to blink');
+                    }
+                    if(!blinking){
+                        console.log('blinking is set to false or undefined, '
+                                + 'so not going to blink');
+                    }
+                    //clear the interval if it already exists
+                    if(blinker_interval_array[index] !== null){
+                        clearInterval(blinker_interval_array[index]);
+                    }
+                    res.send(200);//OK
                 }
             } else {
-                if(!(blink_rate > 0)){
-                    console.log('blink_rate undefined is or set to zero, not going to blink');
-                }
-                if(!blinking){
-                    console.log('blinking is set to false or undefined, so not going to blink');
-                }
-                //clear the interval if it exists
-                if(blinker_interval_array[index] !== null){
-                    clearInterval(blinker_interval_array[index]);
-                }
+                res.send(400); //400 bad request    
             }
         }
     }
