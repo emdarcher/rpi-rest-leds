@@ -109,7 +109,8 @@ exports.findById = function(req, res) {
     }
     if(!found){
        console.log('LED with id: ' + _id + ' not found!'); 
-        res.json(404); //404 not found
+        //404 not found
+        res.status(404).json({message: 'LED with id: ' + _id + ' not found!'});
     }
 };
 
@@ -135,7 +136,8 @@ exports.updateLed = function(req, res) {
     }
     if(!found){
         console.log('LED with id: ' + _id + ' not found!'); 
-        res.send(404); //404 not found
+        //404 not found
+        res.status(404).json({message: 'LED with id: ' + _id + ' not found!'});
     } else {
         // get data from the body of the PUT request
         var state = req.body.state;
@@ -158,17 +160,24 @@ exports.updateLed = function(req, res) {
                 res.send(200); //200 OK, successful request
             } else {
                 console.log(state + ' is not a valid state!');
-                res.send(400); //400 bad request
+                //400 bad request
+                res.status(400).json(
+                        {message: state + ' is an invalid value for state!'}); 
             }
         }
         if((blinking !== undefined) || (blink_rate !== undefined) ){
             var req_error = false;//flag for indicating an error in the request
+            var req_error_msg = {};
             if(blinking !== undefined){
                 if(typeof blinking == 'boolean'){
                     led_array[index].blinking = blinking;
                 } else {
                     console.log('The ' + blinking 
                             + ' value of blinking is not a boolean!');
+                    req_error_msg = {
+                        message: 'The ' + blinking 
+                            + ' value of blinking is not a boolean!'
+                    };
                     req_error = true;//set the req_error flag
                     //res.send(400); //400 bad request
                 }
@@ -223,7 +232,7 @@ exports.updateLed = function(req, res) {
                     res.send(200);//OK
                 }
             } else {
-                res.send(400); //400 bad request    
+                res.status(400).json(req_error_msg); //400 bad request    
             }
         }
     }
