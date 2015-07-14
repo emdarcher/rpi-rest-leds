@@ -1,0 +1,152 @@
+#%RAML 0.8
+
+title: rpi-rest-leds
+baseUri: http://localhost:8080/node-api
+version: v01
+
+/leds:
+  description: All the LEDs
+  get:
+    description: Get the data for all LEDs
+    responses:
+      200:
+        body:
+          application/json:
+            example: |
+                [
+                  {
+                    "id": "0",
+                    "BCM_gpio":"9",
+                    "state": "0",
+                    "color": "red",
+                    "blinking": false,
+                    "blink_rate": 0
+                  },
+                  {
+                    "id": "1",
+                    "BCM_gpio":"10",
+                    "state":"1",
+                    "color":"yellow",
+                    "blinking":true,
+                    "blink_rate": 500
+                  },
+                  {
+                    "id": "2",
+                    "BCM_gpio":"11",
+                    "state":"1",
+                    "color":"green",
+                    "blinking":false,
+                    "blink_rate": 200
+                  }
+
+                ]
+  /{led_id}:
+    description: LED entity
+    get:
+      description: Get data for LED with `id = {led_id}`
+      responses:
+        200:
+          body:
+            application/json:
+              schema: led_data
+              example: |
+                {
+                    "id": "1",
+                    "BCM_gpio":"10",
+                    "state":"1",
+                    "color":"yellow",
+                    "blinking":true,
+                    "blink_rate": 500
+                }
+        404:
+          body:
+            application/json:
+              example: |
+                {
+                  "message":"LED with id not found!"
+                }   
+    put:
+      description: Change parameters of an LED with `id = {led_id}`
+      body:
+        application/json:
+          schema: led_data_put
+          example: |
+            {
+                "state":"1",
+                "blinking":true,
+                "blink_rate":600
+            }
+      responses:
+        200:
+          body:
+            application/json:
+        400:
+          body:
+            application/json:
+              example: |
+                {
+                    "message": "invalid value for <item>"
+                }
+            
+
+schemas:
+ - led_data: |
+    {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title":"led_data",
+    "description": "An LEDs data",
+    "properties": {
+        "id": {
+            "description": "id number for the led, same as led_id",
+            "type":"string"
+        },
+        "BCM_gpio": {
+            "description": "the Broadcom GPIO pin nunber for the LED",
+            "type":"string"
+        },
+        "state": {
+            "description": " '0' for OFF, '1' for ON",
+            "type":"string"
+        },
+        "color": {
+            "description": "The LED's color",
+            "type":"string"
+        },
+        "blinking": {
+            "description": "If the LED is set to blink",
+            "type":"boolean"
+        },
+        "blink_rate": {
+            "description": "The delay in milleseconds between toggling the LED",
+            "type":"integer"
+        },
+        "required": [
+            "id","BCM_gpio","state","blinking","blink_rate"
+        ]
+    }
+    }
+
+ - led_data_put: |
+    {
+    "type": "object",
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "title":"led_data_put",
+    "description": "An LEDs data, schema for PUT",
+    "properties": {
+        "state": {
+            "description": " '0' for OFF, '1' for ON",
+            "type":"string"
+        },
+        "blinking": {
+            "description": "If the LED is set to blink",
+            "type":"boolean"
+        },
+        "blink_rate": {
+            "description": "The delay in milleseconds between toggling the LED",
+            "type":"integer"
+        },
+        "required": []
+    }
+
+    }
