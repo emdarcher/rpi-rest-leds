@@ -12,6 +12,7 @@ http://localhost:8080/node-api
 200
 
 type:application/json
+
 __example:__
 ``` 
 [
@@ -53,6 +54,7 @@ __example:__
 200
 
 type: application/json
+
 __schema:__
 ``` 
 {
@@ -92,6 +94,7 @@ __schema:__
 }
 
 ```
+
 __example:__
 ```
 {
@@ -107,6 +110,7 @@ __example:__
 404
 
 type: application/json
+
 __example:__
 ``` 
 {
@@ -118,6 +122,7 @@ __example:__
 
 #### put: Change parameters of an LED with `id = {led_id}`
 ###### Body of data sent
+
 __schema:__
 ```
     {
@@ -144,6 +149,7 @@ __schema:__
     }
 
 ```
+
 __example:__
 ```
 {
@@ -167,6 +173,7 @@ type: application/json
 400
 
 type: application/json
+
 __example:__
 ``` 
 {
