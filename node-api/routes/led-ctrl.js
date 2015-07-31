@@ -54,7 +54,7 @@ var init_done = false;
 // delay in milliseconds for the blinking interval function
 var blink_delay = 500;
 
-var min_blink_delay = 200;
+var min_blink_delay = 50;
 
 // Interval function (repeats after a certain time interval)
 // which toggles the states of any LEDs that have
