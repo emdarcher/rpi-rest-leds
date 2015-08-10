@@ -1,6 +1,19 @@
 {
     "name": "rpi-rest-leds",
+    "version":"1.0.0",
     "description": "REST api to control LEDs on Rpi GPIO",
+    "main":"server.js",
+    "author":"Ethan Durrant",
+    "keywords": ["raspberry pi","rpi","leds","LED","rest","api"],
+    "bugs": {
+        "url":"https://github.com/emdarcher/rpi-rest-leds/issues"
+    },
+    "license":"MIT",
+    "files":["routes"],
+    "repository":{
+        "type":"git",
+        "url":"https://github.com/emdarcher/rpi-rest-leds.git"
+    },
     "dependencies": {
         "express": "~4.0.0",
         "body-parser": "~1.13.2",
