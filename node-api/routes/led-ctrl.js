@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 //led-ctrl.js
 //led control routes and api goes in here
 
