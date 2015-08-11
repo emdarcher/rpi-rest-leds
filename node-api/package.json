@@ -4,6 +4,7 @@
     "description": "REST api to control LEDs on Rpi GPIO",
     "author":"Ethan Durrant",
     "keywords": ["raspberry pi","rpi","leds","LED","rest","api"],
+    "main":"server.js",
     "bugs": {
         "url":"https://github.com/emdarcher/rpi-rest-leds/issues"
     },
