@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 //server.js all the server stuff here
 
 // get the modules we need
