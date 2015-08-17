@@ -29,8 +29,9 @@
   },
   "preferGlobal": true,
   "dependencies": {
-    "express": "~4.0.0",
     "body-parser": "~1.13.2",
+    "express": "~4.0.0",
+    "node-linux": "^0.1.2",
     "step": "~0.0.6"
   }
 }
